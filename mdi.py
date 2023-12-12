@@ -1,12 +1,13 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMdiArea, QMdiSubWindow, QDialog, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QTabWidget, QWidget,  QTableWidget, QTableWidgetItem, QTableView, QLineEdit, QFormLayout
 from PyQt6.QtGui import QAction
-from src.utils import handler
+# from src.utils import handler
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PyQt6 import QtCore
 from PyQt6.QtCore import Qt
 from PyQt6 import QtSql
 from PyQt6.QtSql import QSqlQuery
+import re
 
 def connectionDB():
     db = QSqlDatabase.addDatabase("QSQLITE")
@@ -123,10 +124,12 @@ class MainWindow(QMainWindow):
         self.id_buku = QLineEdit(self)
         self.nama_buku = QLineEdit(self)
         self.stok = QLineEdit(self)
+        self.tahun_terbit = QLineEdit(self)
 
         form_layout.addRow(QLabel("ID Buku:"), self.id_buku)
         form_layout.addRow(QLabel("Nama Buku:"), self.nama_buku)
         form_layout.addRow(QLabel("Stok:"), self.stok)
+        form_layout.addRow(QLabel("Tahun Terbit:"), self.tahun_terbit)
 
         layout.addLayout(form_layout)
         layout.addLayout(h_layout)
@@ -138,6 +141,7 @@ class MainWindow(QMainWindow):
         self.id_buku.setText(str(book["id_buku"]))
         self.nama_buku.setText(book["nama_buku"])
         self.stok.setText(str(book["stok"]))
+        self.tahun_terbit.setText(str(book["tahun_terbit"]))
 
     def go_to_first_book(self):
         self.current_book_index = 0
@@ -167,7 +171,7 @@ class MainWindow(QMainWindow):
 
         button_first = QPushButton("First")
         button_next = QPushButton("Next")
-        button_manage = QPushButton("Kelola Buku")
+        button_manage = QPushButton("Kelola Anggota")
         button_prev = QPushButton("Previous")
         button_last = QPushButton("Last")
 
@@ -179,6 +183,7 @@ class MainWindow(QMainWindow):
 
         button_first.clicked.connect(self.go_to_first_member)
         button_prev.clicked.connect(self.go_to_previous_member)
+        button_manage.clicked.connect(self.dialog_anggota)
         button_next.clicked.connect(self.go_to_next_member)
         button_last.clicked.connect(self.go_to_last_member)
 
@@ -228,17 +233,48 @@ class MainWindow(QMainWindow):
     def dialog_buku(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Dialog Buku")
-        dialog.setGeometry(200, 200, 980, 760)
+        dialog.setGeometry(200, 200, 540, 439)
 
-        model = QSqlTableModel(self)
-        model.setTable("buku")
-        model.select()
+        filter_widget = QWidget()
+        filter_layout = QHBoxLayout(filter_widget)
+        self.input_judul = QLineEdit()
+        self.cari1 = QPushButton("Cari")
+        self.input_tahun = QLineEdit()
+        self.cari2 = QPushButton("Cari")
+
+        filter_layout.addWidget(QLabel("Judul"))
+        filter_layout.addWidget(self.input_judul)
+        filter_layout.addWidget(self.cari1)
+        filter_layout.addWidget(QLabel("Tahun Terbit"))
+        filter_layout.addWidget(self.input_tahun)
+        filter_layout.addWidget(self.cari2)
+
+        self.cari1.clicked.connect(lambda: self.searchFilter(self.input_judul.text(), "nama_buku"))
+        self.cari2.clicked.connect(lambda: self.searchFilter(self.input_tahun.text(), "tahun_terbit"))
+
+        self.model = QSqlTableModel(self)
+        self.model.setTable("buku")
+        self.model.select()
 
         table_view = QTableView()
-        table_view.setModel(model)
+        table_view.setModel(self.model)
+
+        manage_widget = QWidget()
+        manage_layout = QHBoxLayout(manage_widget)
+        update_button = QPushButton("Update")
+        cancel_button = QPushButton("Cancel")
+        add_button = QPushButton("Add")
+        delete_button = QPushButton("Delete")
+
+        manage_layout.addWidget(update_button)
+        manage_layout.addWidget(cancel_button)
+        manage_layout.addWidget(add_button)
+        manage_layout.addWidget(delete_button)
 
         layout = QVBoxLayout()
+        layout.addWidget(filter_widget)
         layout.addWidget(table_view)
+        layout.addWidget(manage_widget)
 
         dialog.setLayout(layout)
         dialog.exec()
@@ -246,12 +282,61 @@ class MainWindow(QMainWindow):
     def dialog_anggota(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Dialog Anggota")
+        dialog.setGeometry(200, 200, 540, 439)
+
+        filter_widget = QWidget()
+        filter_layout = QHBoxLayout(filter_widget)
+        self.input_nama = QLineEdit()
+        self.cari1 = QPushButton("Cari")
+        self.input_alamat = QLineEdit()
+        self.cari2 = QPushButton("Cari")
+
+        filter_layout.addWidget(QLabel("Nama"))
+        filter_layout.addWidget(self.input_nama)
+        filter_layout.addWidget(self.cari1)
+        filter_layout.addWidget(QLabel("Alamat"))
+        filter_layout.addWidget(self.input_alamat)
+        filter_layout.addWidget(self.cari2)
+
+        self.cari1.clicked.connect(lambda: self.searchFilter(self.input_nama.text(), "nama"))
+        self.cari2.clicked.connect(lambda: self.searchFilter(self.input_alamat.text(), "alamat"))
+
+        self.model = QSqlTableModel(self)
+        self.model.setTable("user")
+        self.model.select()
+
+        table_view = QTableView()
+        table_view.setModel(self.model)
+
+        manage_widget = QWidget()
+        manage_layout = QHBoxLayout(manage_widget)
+        update_button = QPushButton("Update")
+        cancel_button = QPushButton("Cancel")
+        add_button = QPushButton("Add")
+        delete_button = QPushButton("Delete")
+
+        manage_layout.addWidget(update_button)
+        manage_layout.addWidget(cancel_button)
+        manage_layout.addWidget(add_button)
+        manage_layout.addWidget(delete_button)
+
+        layout = QVBoxLayout()
+        layout.addWidget(filter_widget)
+        layout.addWidget(table_view)
+        layout.addWidget(manage_widget)
+
+        dialog.setLayout(layout)
         dialog.exec()
 
     def dialog_pinjaman(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Dialog Pinjaman")
         dialog.exec()
+
+    def searchFilter(self, inputan, field):
+        s = re.sub("[\W_]+", "", inputan)
+        filter_str = f"{field} LIKE '%{s}%'"
+        self.model.setFilter(filter_str)
 
     def close_tab(self, index):
         widget = self.tab_widget.widget(index)
