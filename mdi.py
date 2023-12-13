@@ -1,11 +1,9 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMdiArea, QMdiSubWindow, QDialog, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QTabWidget, QWidget,  QTableWidget, QTableWidgetItem, QTableView, QLineEdit, QFormLayout
 from PyQt6.QtGui import QAction
-from src.utils import handler
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PyQt6 import QtCore
 from PyQt6.QtCore import Qt
-from PyQt6 import QtSql
 from PyQt6.QtSql import QSqlQuery
 
 def connectionDB():
