@@ -1,7 +1,6 @@
 import sys, re, os
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMdiArea, QMdiSubWindow, QDialog, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QTabWidget, QWidget, QTableWidget, QTableWidgetItem, QTableView, QLineEdit, QFormLayout, QComboBox, QDateEdit, QListView, QCheckBox
-from PyQt6.QtGui import QAction, QStandardItem, QStandardItemModel
-from src.utils import handler
+from PyQt6.QtGui import QAction, QStandardItem, QStandardItemModel, QFont
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PyQt6 import QtCore
 from PyQt6.QtCore import Qt, QDate
@@ -152,6 +151,14 @@ class MainWindow(QMainWindow):
         button_next.clicked.connect(self.go_to_next_book)
         button_last.clicked.connect(self.go_to_last_book)
 
+        judul_form = QLabel("Daftar Buku")
+        font = judul_form.font()
+        font.setPointSize(30)
+        font.setUnderline(True)
+        font.setBold(True)
+        judul_form.setFont(font)
+        judul_form.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+
         form_layout = QFormLayout()
         self.id_buku = QLineEdit(self)
         self.nama_buku = QLineEdit(self)
@@ -163,9 +170,13 @@ class MainWindow(QMainWindow):
         form_layout.addRow(QLabel("Stok:"), self.stok)
         form_layout.addRow(QLabel("Tahun Terbit:"), self.tahun_terbit)
 
+        form_v_layout = QVBoxLayout()
+        form_v_layout.addWidget(judul_form)
+        form_v_layout.addLayout(form_layout)
+
         form_h_layout = QHBoxLayout()
         form_h_layout.addSpacing(200)
-        form_h_layout.addLayout(form_layout)
+        form_h_layout.addLayout(form_v_layout)
         form_h_layout.addSpacing(200)
 
         v_layout.addStretch()
@@ -229,6 +240,14 @@ class MainWindow(QMainWindow):
         button_next.clicked.connect(self.go_to_next_member)
         button_last.clicked.connect(self.go_to_last_member)
 
+        judul_form = QLabel("Daftar Anggota")
+        font = judul_form.font()
+        font.setPointSize(30)
+        font.setUnderline(True)
+        font.setBold(True)
+        judul_form.setFont(font)
+        judul_form.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+
         form_layout = QFormLayout()
         self.id_anggota = QLineEdit(self)
         self.nama = QLineEdit(self)
@@ -238,9 +257,13 @@ class MainWindow(QMainWindow):
         form_layout.addRow(QLabel("Nama:"), self.nama)
         form_layout.addRow(QLabel("Alamat:"), self.alamat)
 
+        form_v_layout = QVBoxLayout()
+        form_v_layout.addWidget(judul_form)
+        form_v_layout.addLayout(form_layout)
+
         form_h_layout = QHBoxLayout()
         form_h_layout.addSpacing(200)
-        form_h_layout.addLayout(form_layout)
+        form_h_layout.addLayout(form_v_layout)
         form_h_layout.addSpacing(200)
 
         v_layout = QVBoxLayout()
@@ -280,9 +303,119 @@ class MainWindow(QMainWindow):
         self.load_member_data()
 
     def tab_pinjaman(self, layout):
-        button = QPushButton("Kelola Pinjaman")
-        button.clicked.connect(self.dialog_pinjaman)
-        layout.addWidget(button)
+        db = DatabaseHandler()
+        self.pinjam = db.get_data("SELECT * FROM anggota")
+        self.current_pinjam_index = 0
+
+        widget_pinjam = QWidget()
+        layout_pinjam = QHBoxLayout(widget_pinjam)
+        mdi_pinjam1 = QMdiArea()
+        mdi_pinjam2 = QMdiArea()
+
+        layout_pinjam.addWidget(mdi_pinjam1)
+        layout_pinjam.addWidget(mdi_pinjam2)
+
+        sub_window_1 = QMdiSubWindow()
+        sub_window_1.setWidget(QWidget())
+        mdi_pinjam1.addSubWindow(sub_window_1)
+        sub_window_1.showMaximized()
+
+        sub_window_2 = QMdiSubWindow()
+        sub_window_2.setWidget(QWidget())
+        mdi_pinjam2.addSubWindow(sub_window_2)
+        sub_window_2.showMaximized()
+
+        # sub window 1
+        v_layout_subwindow_1 = QVBoxLayout(sub_window_1.widget())
+
+        judul_form = QLabel("Daftar Pinjaman")
+        font = judul_form.font()
+        font.setPointSize(30)
+        font.setUnderline(True)
+        font.setBold(True)
+        judul_form.setFont(font)
+        judul_form.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+
+        form_layout = QFormLayout()
+        self.id_peminjaman = QLineEdit(self)
+        self.nama_peminjam = QLineEdit(self)
+        self.tgl_pinjam = QLineEdit(self)
+        self.tgl_kembali = QLineEdit(self)
+
+        form_layout.addRow(QLabel("ID Peminjaman:"), self.id_peminjaman)
+        form_layout.addRow(QLabel("Nama Peminjam:"), self.nama_peminjam)
+        form_layout.addRow(QLabel("Tanggal Pinjam:"), self.tgl_pinjam)
+        form_layout.addRow(QLabel("Tanggal Kembali:"), self.tgl_kembali)
+
+        form_v_layout = QVBoxLayout()
+        form_v_layout.addStretch()
+        form_v_layout.addWidget(judul_form)
+        form_v_layout.addLayout(form_layout)
+        form_v_layout.addStretch()
+
+        h_layout_buttons = QHBoxLayout()
+        button_first = QPushButton("First")
+        button_prev = QPushButton("Previous")
+        button_next = QPushButton("Next")
+        button_last = QPushButton("Last")
+
+        button_first.clicked.connect(self.go_to_first_pinjam)
+        button_prev.clicked.connect(self.go_to_previous_pinjam)
+        button_next.clicked.connect(self.go_to_next_pinjam)
+        button_last.clicked.connect(self.go_to_last_pinjam)
+
+        h_layout_buttons.addWidget(button_first)
+        h_layout_buttons.addWidget(button_prev)
+        h_layout_buttons.addWidget(button_next)
+        h_layout_buttons.addWidget(button_last)
+
+        v_layout_subwindow_1.addLayout(form_v_layout)
+        v_layout_subwindow_1.addLayout(h_layout_buttons)
+
+        # sub window 2
+        v_layout_subwindow_2 = QVBoxLayout(sub_window_2.widget())
+
+        h_layout_buttons_2 = QHBoxLayout()
+
+        add_button = QPushButton("Add")
+        cancel_button = QPushButton("Cancel")
+        delete_button = QPushButton("Delete")
+
+        h_layout_buttons_2.addWidget(add_button)
+        h_layout_buttons_2.addWidget(cancel_button)
+        h_layout_buttons_2.addWidget(delete_button)
+
+        v_layout_subwindow_2.addLayout((h_layout_buttons_2))
+
+        layout.addWidget(widget_pinjam)
+
+        self.load_pinjam_data()
+
+    def load_pinjam_data(self):
+        if len(self.pinjam) < 1:
+            return
+        data_pinjam = self.pinjam[self.current_pinjam_index]
+        self.id_peminjaman.setText(str(data_pinjam["id_anggota"]))
+        self.nama_peminjam.setText(data_pinjam["nama"])
+        self.tgl_pinjam.setText(str(data_pinjam["alamat"]))
+
+    def go_to_first_pinjam(self):
+        self.current_pinjam_index = 0
+        self.load_pinjam_data()
+
+    def go_to_previous_pinjam(self):
+        if self.current_pinjam_index > 0:
+            self.current_pinjam_index -= 1
+            self.load_pinjam_data()
+
+    def go_to_next_pinjam(self):
+        if self.current_pinjam_index < len(self.pinjam) - 1:
+            self.current_pinjam_index += 1
+            self.load_pinjam_data()
+
+    def go_to_last_pinjam(self):
+        self.current_pinjam_index = len(self.pinjam) - 1
+        self.load_pinjam_data()
 
     def dialog_buku(self):
         dialog = QDialog(self)
